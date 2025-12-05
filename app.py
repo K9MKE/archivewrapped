@@ -57,6 +57,11 @@ def index():
     """Main page"""
     return render_template('index.html')
 
+@app.route('/health')
+def health():
+    """Health check endpoint"""
+    return jsonify({'status': 'ok', 'message': 'Server is running'}), 200
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
     """Handle file upload and generate wrapped"""

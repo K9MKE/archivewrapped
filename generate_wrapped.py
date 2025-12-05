@@ -19,9 +19,14 @@ import gc  # Garbage collection for memory management
 plt.style.use('dark_background')
 sns.set_palette("husl")
 
-# Reduce matplotlib memory usage
+# Reduce matplotlib memory usage aggressively
 matplotlib.rcParams['figure.max_open_warning'] = 0
 matplotlib.rcParams['agg.path.chunksize'] = 10000
+matplotlib.rcParams['path.simplify'] = True
+matplotlib.rcParams['path.simplify_threshold'] = 1.0
+
+# Reduce font cache size
+matplotlib.rcParams['font.size'] = 10
 
 class WrappedPresentation:
     def __init__(self, analyzer):
@@ -453,7 +458,7 @@ class WrappedPresentation:
         # Convert hours to minutes for display
         top_artists['total_minutes'] = top_artists['total_hours'] * 60
         
-        fig, ax = plt.subplots(figsize=(18, 11), facecolor=self.colors['background'])
+        fig, ax = plt.subplots(figsize=(12, 8), facecolor=self.colors['background'])
         
         # Add subtle background pattern
         from matplotlib.patches import Rectangle
@@ -621,7 +626,7 @@ class WrappedPresentation:
         # Get top 5 shows only
         top_shows = self.analyzer.get_top_shows(5)
         
-        fig = plt.figure(figsize=(16, 12), facecolor=self.colors['background'])
+        fig = plt.figure(figsize=(12, 8), facecolor=self.colors['background'])
         
         # Title
         title_ax = fig.add_axes([0.05, 0.92, 0.9, 0.06])
@@ -723,7 +728,7 @@ class WrappedPresentation:
         """Create chart showing listening by day of week"""
         day_stats = self.analyzer.get_listening_by_day()
         
-        fig, ax = plt.subplots(figsize=(14, 9), facecolor=self.colors['background'])
+        fig, ax = plt.subplots(figsize=(12, 8), facecolor=self.colors['background'])
         
         # Add show artwork background
         top_shows = self.analyzer.get_top_shows(3)
