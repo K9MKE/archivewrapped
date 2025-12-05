@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1DB954;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#ff6b9d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#c06cf5;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="48" fill="url(#gradient1)"/>
+  
+  <!-- Music note -->
+  <path d="M65 25 L65 55 Q65 62 58 62 Q51 62 51 55 Q51 48 58 48 Q62 48 65 50 L65 35 L75 32 L75 45 Q75 52 68 52 Q61 52 61 45 Q61 38 68 38 Q72 38 75 40 L75 25 Z" fill="white"/>
+  
+  <!-- Sparkle effect -->
+  <circle cx="30" cy="30" r="3" fill="white" opacity="0.8"/>
+  <circle cx="75" cy="70" r="2" fill="white" opacity="0.6"/>
+  <circle cx="25" cy="70" r="2.5" fill="white" opacity="0.7"/>
+</svg>
