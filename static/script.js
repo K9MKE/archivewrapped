@@ -73,12 +73,24 @@ function handleFile(file) {
     const formData = new FormData();
     formData.append('file', file);
 
-    // Upload and process
+    // Upload and process (with longer timeout for slide generation)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minute timeout
+    
     fetch('/upload', {
         method: 'POST',
-        body: formData
+        body: formData,
+        signal: controller.signal
     })
-    .then(response => response.json())
+    .then(response => {
+        clearTimeout(timeoutId);
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || `Server error: ${response.status}`);
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.error) {
             throw new Error(data.error);
@@ -97,11 +109,17 @@ function handleFile(file) {
         showSlidesScreen();
     })
     .catch(error => {
+        clearTimeout(timeoutId);
         // Show error
         processing.style.display = 'none';
         uploadBox.style.display = 'block';
         errorMessage.style.display = 'block';
-        errorMessage.textContent = `Error: ${error.message}. Please make sure you uploaded a valid Archive.org listening history export.`;
+        
+        if (error.name === 'AbortError') {
+            errorMessage.textContent = 'Request timed out. Your file may be too large or the server is busy. Please try again.';
+        } else {
+            errorMessage.textContent = `Error: ${error.message}. Please make sure you uploaded a valid Archive.org listening history export.`;
+        }
     });
 }
 

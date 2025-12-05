@@ -106,28 +106,51 @@ def upload_file():
                 }), 400
             
             # Generate wrapped
+            print("Starting data analysis...")
             analyzer = ListeningHistoryAnalyzer(data_dir)
             analyzer.load_data()
             
             # Get stats for response
+            print("Calculating statistics...")
             stats = analyzer.get_stats_summary()
             
             # Get top show for audio
+            print("Fetching audio...")
             top_shows = analyzer.get_top_shows(1)
             audio_url = None
             if len(top_shows) > 0:
                 recording_id = top_shows.iloc[0].get('recording_id', None)
                 if recording_id:
-                    audio_url = get_random_audio_url(recording_id)
+                    try:
+                        audio_url = get_random_audio_url(recording_id)
+                    except Exception as e:
+                        print(f"Could not get audio: {e}")
             
             # Generate slides
+            print("Generating slides (this may take 1-2 minutes)...")
             output_dir = os.path.join('static', 'generated')
+            os.makedirs(output_dir, exist_ok=True)
             presentation = WrappedPresentation(analyzer)
             presentation.output_dir = output_dir
-            presentation.generate_all()
+            
+            try:
+                presentation.generate_all()
+            except Exception as e:
+                print(f"Error generating slides: {e}")
+                return jsonify({
+                    'success': False,
+                    'error': f'Error generating slides: {str(e)}'
+                }), 500
             
             # Get list of generated slides
+            print("Finalizing...")
             slides = sorted([f for f in os.listdir(output_dir) if f.endswith('.png')])
+            
+            if not slides:
+                return jsonify({
+                    'success': False,
+                    'error': 'No slides were generated. Please try again.'
+                }), 500
             
             response_data = {
                 'success': True,
