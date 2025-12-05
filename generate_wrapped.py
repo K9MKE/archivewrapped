@@ -128,22 +128,42 @@ class WrappedPresentation:
                 return True
         return False
     
-    def _get_show_artwork(self, recording_id):
+    def _get_show_artwork(self, recording_id, quick_mode=True):
         """Fetch show artwork from Archive.org using official APIs
         
-        DISABLED on production to reduce memory and processing time.
-        Enable locally by setting ENABLE_ARTWORK environment variable.
+        Args:
+            recording_id: Archive.org identifier
+            quick_mode: If True, only try the fastest methods (default: True for production)
         """
-        # Skip artwork fetching on production servers to save memory and time
-        if not os.environ.get('ENABLE_ARTWORK'):
-            return None
-            
         try:
             import urllib.request
             import json
             from PIL import Image
             import io
             
+            # In production (quick mode), only try the fastest method
+            if quick_mode:
+                # Try only the most common filenames with short timeout
+                common_names = [
+                    "itemimage.jpg",
+                    f"{recording_id}.jpg",
+                ]
+                
+                for filename in common_names:
+                    try:
+                        url = f"https://archive.org/download/{recording_id}/{filename}"
+                        with urllib.request.urlopen(url, timeout=2) as response:
+                            image_data = response.read()
+                            img = Image.open(io.BytesIO(image_data))
+                            img = img.convert('RGBA')
+                            # Smaller thumbnail for faster processing
+                            img.thumbnail((300, 300), Image.Resampling.LANCZOS)
+                            return np.array(img)
+                    except:
+                        continue
+                return None
+            
+            # Full method (for local use with ENABLE_ARTWORK=1)
             # Method 1: Try using official Metadata API to find image files
             # API endpoint: https://archive.org/metadata/{identifier}
             try:
@@ -668,26 +688,30 @@ class WrappedPresentation:
             ax.text(8, 5, f"#{i+1}", ha='center', va='center', fontsize=28, 
                    color='white', fontweight='bold', zorder=4)
             
-            # Try to get show artwork
+            # Try to get show artwork (using quick mode for production)
             recording_id = show.get('recording_id', None)
             artwork_x = 20
             if recording_id:
-                show_artwork = self._get_show_artwork(recording_id)
-                if show_artwork is not None:
-                    # Calculate zoom to ensure consistent display size regardless of image dimensions
-                    # Target display size: ~175 pixels (500 * 0.35)
-                    target_size = 175
-                    img_height, img_width = show_artwork.shape[:2]
-                    max_dimension = max(img_height, img_width)
-                    zoom_factor = target_size / max_dimension
-                    
-                    imagebox = OffsetImage(show_artwork, zoom=zoom_factor)
-                    imagebox.image.axes = ax
-                    ab = AnnotationBbox(imagebox, (artwork_x, 5), frameon=True, 
-                                      box_alignment=(0.5, 0.5),
-                                      bboxprops=dict(edgecolor='white', linewidth=2.5, facecolor='none'))
-                    ax.add_artist(ab)
-                    artwork_x = 32
+                try:
+                    print(f"  Fetching artwork for show #{i+1}...")
+                    show_artwork = self._get_show_artwork(recording_id, quick_mode=True)
+                    if show_artwork is not None:
+                        # Calculate zoom to ensure consistent display size regardless of image dimensions
+                        target_size = 100  # Smaller for faster rendering
+                        img_height, img_width = show_artwork.shape[:2]
+                        max_dimension = max(img_height, img_width)
+                        zoom_factor = target_size / max_dimension
+                        
+                        imagebox = OffsetImage(show_artwork, zoom=zoom_factor)
+                        imagebox.image.axes = ax
+                        ab = AnnotationBbox(imagebox, (artwork_x, 5), frameon=True, 
+                                          box_alignment=(0.5, 0.5),
+                                          bboxprops=dict(edgecolor='white', linewidth=2.5, facecolor='none'))
+                        ax.add_artist(ab)
+                        artwork_x = 32
+                except Exception as e:
+                    print(f"  Could not load artwork: {e}")
+                    pass  # Continue without artwork
             
             # Show info
             ax.text(artwork_x, 7, show['artist'], ha='left', va='center',
