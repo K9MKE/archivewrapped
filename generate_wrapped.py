@@ -13,10 +13,15 @@ import os
 from analyze import ListeningHistoryAnalyzer
 import numpy as np
 from matplotlib import patheffects
+import gc  # Garbage collection for memory management
 
 # Set style
 plt.style.use('dark_background')
 sns.set_palette("husl")
+
+# Reduce matplotlib memory usage
+matplotlib.rcParams['figure.max_open_warning'] = 0
+matplotlib.rcParams['agg.path.chunksize'] = 10000
 
 class WrappedPresentation:
     def __init__(self, analyzer):
@@ -288,7 +293,7 @@ class WrappedPresentation:
         
         plt.tight_layout()
         plt.savefig(os.path.join(self.output_dir, '01_title.png'), 
-                    dpi=300, bbox_inches='tight', facecolor=self.colors['background'])
+                    dpi=150, bbox_inches='tight', facecolor=self.colors['background'])
         plt.close()
         print("✓ Created title slide")
     
@@ -339,7 +344,7 @@ class WrappedPresentation:
         
         plt.tight_layout()
         plt.savefig(os.path.join(self.output_dir, '02_listening_time.png'), 
-                    dpi=300, bbox_inches='tight', facecolor=self.colors['background'])
+                    dpi=150, bbox_inches='tight', facecolor=self.colors['background'])
         plt.close()
         print("✓ Created listening time slide")
     
@@ -431,7 +436,7 @@ class WrappedPresentation:
         
         plt.tight_layout()
         plt.savefig(os.path.join(self.output_dir, '03_top_artist.png'), 
-                    dpi=300, bbox_inches='tight', facecolor=self.colors['background'])
+                    dpi=150, bbox_inches='tight', facecolor=self.colors['background'])
         plt.close()
         print("✓ Created top artist slide")
     
@@ -511,7 +516,7 @@ class WrappedPresentation:
         plt.tight_layout(pad=2)
         plt.subplots_adjust(left=0.25)
         plt.savefig(os.path.join(self.output_dir, '04_top_artists_chart.png'), 
-                    dpi=300, bbox_inches='tight', facecolor=self.colors['background'])
+                    dpi=150, bbox_inches='tight', facecolor=self.colors['background'])
         plt.close()
         print("✓ Created top artists chart")
     
@@ -601,7 +606,7 @@ class WrappedPresentation:
         
         plt.tight_layout()
         plt.savefig(os.path.join(self.output_dir, '05_top_show.png'), 
-                    dpi=300, bbox_inches='tight', facecolor=self.colors['background'])
+                    dpi=150, bbox_inches='tight', facecolor=self.colors['background'])
         plt.close()
         print("✓ Created insights slide")
     
@@ -702,7 +707,7 @@ class WrappedPresentation:
                    fontsize=12, color=self.colors['text'], alpha=0.85, zorder=4)
         
         plt.savefig(os.path.join(self.output_dir, '05_top_shows.png'),
-                   dpi=300, bbox_inches='tight', facecolor=self.colors['background'])
+                   dpi=150, bbox_inches='tight', facecolor=self.colors['background'])
         plt.close()
         print("✓ Created top 5 shows slide")
         
@@ -760,7 +765,7 @@ class WrappedPresentation:
         
         plt.tight_layout()
         plt.savefig(os.path.join(self.output_dir, '07_day_of_week.png'), 
-                    dpi=300, bbox_inches='tight', facecolor=self.colors['background'])
+                    dpi=150, bbox_inches='tight', facecolor=self.colors['background'])
         plt.close()
         print("✓ Created day of week chart")
     
@@ -820,7 +825,7 @@ class WrappedPresentation:
         
         plt.tight_layout()
         plt.savefig(os.path.join(self.output_dir, '08_top_day.png'), 
-                    dpi=300, bbox_inches='tight', facecolor=self.colors['background'])
+                    dpi=150, bbox_inches='tight', facecolor=self.colors['background'])
         plt.close()
         print("✓ Created top day slide")
     
@@ -890,7 +895,7 @@ class WrappedPresentation:
         
         plt.tight_layout()
         plt.savefig(os.path.join(self.output_dir, '09_summary_stats.png'), 
-                    dpi=300, bbox_inches='tight', facecolor=self.colors['background'])
+                    dpi=150, bbox_inches='tight', facecolor=self.colors['background'])
         plt.close()
         print("✓ Created summary stats slide")
     
@@ -926,7 +931,7 @@ class WrappedPresentation:
         
         plt.tight_layout()
         plt.savefig(os.path.join(self.output_dir, '10_monthly_timeline.png'), 
-                    dpi=300, bbox_inches='tight', facecolor=self.colors['background'])
+                    dpi=150, bbox_inches='tight', facecolor=self.colors['background'])
         plt.close()
         print("✓ Created monthly timeline")
     
@@ -985,7 +990,7 @@ class WrappedPresentation:
         
         plt.tight_layout()
         plt.savefig(os.path.join(self.output_dir, '11_finale.png'), 
-                    dpi=300, bbox_inches='tight', facecolor=self.colors['background'])
+                    dpi=150, bbox_inches='tight', facecolor=self.colors['background'])
         plt.close()
         print("✓ Created finale slide")
     
@@ -1090,26 +1095,48 @@ class WrappedPresentation:
         
         plt.tight_layout()
         plt.savefig(os.path.join(self.output_dir, '06_insights.png'), 
-                    dpi=300, bbox_inches='tight', facecolor=self.colors['background'])
+                    dpi=150, bbox_inches='tight', facecolor=self.colors['background'])
         plt.close()
         print("✓ Created insights slide")
     
     def generate_all(self):
-        """Generate all slides"""
+        """Generate all slides with memory management"""
         print("\n📊 Generating Wrapped presentation...")
         print("-" * 50)
         
+        # Generate slides one at a time with garbage collection
         self.create_title_slide()
+        gc.collect()
+        
         self.create_listening_time_slide()
+        gc.collect()
+        
         self.create_top_artist_slide()
+        gc.collect()
+        
         self.create_top_artists_chart()
+        gc.collect()
+        
         self.create_insights_slide()
+        gc.collect()
+        
         gallery_count = self.create_show_gallery_slides()
+        gc.collect()
+        
         self.create_day_of_week_chart()
+        gc.collect()
+        
         self.create_top_day_slide()
+        gc.collect()
+        
         self.create_stats_summary_slide()
+        gc.collect()
+        
         self.create_monthly_timeline()
+        gc.collect()
+        
         self.create_finale_slide()
+        gc.collect()
         
         # Renumber files to maintain order
         import shutil
