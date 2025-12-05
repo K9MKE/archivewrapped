@@ -3,6 +3,8 @@ let slides = [];
 let totalSlides = 0;
 let autoplayInterval = null;
 let isAutoPlaying = false;
+let backgroundAudio = null;
+let isMuted = false;
 
 // Upload functionality
 document.addEventListener('DOMContentLoaded', function() {
@@ -85,6 +87,11 @@ function handleFile(file) {
         // Store slides
         slides = data.slides;
         totalSlides = slides.length;
+        
+        // Setup audio if available
+        if (data.audio_url) {
+            setupBackgroundAudio(data.audio_url);
+        }
         
         // Show slides screen
         showSlidesScreen();
@@ -296,6 +303,44 @@ function restart() {
     currentSlide = 0;
     slides = [];
     totalSlides = 0;
+    
+    // Stop and remove audio
+    if (backgroundAudio) {
+        backgroundAudio.pause();
+        backgroundAudio = null;
+    }
+    const muteBtn = document.getElementById('mute-btn');
+    if (muteBtn) {
+        muteBtn.style.display = 'none';
+    }
+}
+
+function setupBackgroundAudio(audioUrl) {
+    backgroundAudio = document.getElementById('background-audio');
+    const muteBtn = document.getElementById('mute-btn');
+    const muteIcon = document.getElementById('mute-icon');
+    
+    if (backgroundAudio && audioUrl) {
+        backgroundAudio.src = audioUrl;
+        backgroundAudio.volume = 0.3;
+        backgroundAudio.loop = true;
+        
+        // Show mute button
+        muteBtn.style.display = 'flex';
+        
+        // Try to play (browsers may require user interaction)
+        backgroundAudio.play().catch(err => {
+            console.log('Audio autoplay prevented:', err);
+        });
+        
+        // Setup mute button
+        muteBtn.addEventListener('click', function() {
+            isMuted = !isMuted;
+            backgroundAudio.muted = isMuted;
+            muteIcon.textContent = isMuted ? '🔇' : '🔊';
+            muteBtn.classList.toggle('muted', isMuted);
+        });
+    }
 }
 
 // Add fadeOut animation

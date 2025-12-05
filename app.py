@@ -11,6 +11,8 @@ from werkzeug.utils import secure_filename
 from analyze import ListeningHistoryAnalyzer
 from generate_wrapped import WrappedPresentation
 import json
+import urllib.request
+import random
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
@@ -21,6 +23,34 @@ app.config['OUTPUT_FOLDER'] = 'output'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['OUTPUT_FOLDER'], exist_ok=True)
 os.makedirs('static/generated', exist_ok=True)
+
+def get_random_audio_url(recording_id):
+    """Get a random audio track URL from Archive.org recording (excluding track 01)"""
+    try:
+        # Fetch metadata from Archive.org
+        metadata_url = f"https://archive.org/metadata/{recording_id}"
+        with urllib.request.urlopen(metadata_url, timeout=5) as response:
+            metadata = json.loads(response.read())
+        
+        # Find all MP3 files, excluding track 01
+        mp3_files = []
+        if 'files' in metadata:
+            for file in metadata['files']:
+                filename = file.get('name', '')
+                # Look for MP3 files, exclude track 01
+                if filename.endswith('.mp3') and not any(x in filename.lower() for x in ['01.mp3', 't01.', 'd1t01', 's1t01']):
+                    mp3_files.append(filename)
+        
+        if mp3_files:
+            # Pick a random track
+            selected_file = random.choice(mp3_files)
+            # Return Archive.org download URL
+            return f"https://archive.org/download/{recording_id}/{selected_file}"
+        
+        return None
+    except Exception as e:
+        print(f"Could not fetch audio for {recording_id}: {e}")
+        return None
 
 @app.route('/')
 def index():
@@ -82,6 +112,14 @@ def upload_file():
             # Get stats for response
             stats = analyzer.get_stats_summary()
             
+            # Get top show for audio
+            top_shows = analyzer.get_top_shows(1)
+            audio_url = None
+            if len(top_shows) > 0:
+                recording_id = top_shows.iloc[0].get('recording_id', None)
+                if recording_id:
+                    audio_url = get_random_audio_url(recording_id)
+            
             # Generate slides
             output_dir = os.path.join('static', 'generated')
             presentation = WrappedPresentation(analyzer)
@@ -91,7 +129,7 @@ def upload_file():
             # Get list of generated slides
             slides = sorted([f for f in os.listdir(output_dir) if f.endswith('.png')])
             
-            return jsonify({
+            response_data = {
                 'success': True,
                 'stats': {
                     'total_hours': round(stats['total_hours'], 1),
@@ -100,7 +138,12 @@ def upload_file():
                     'total_sessions': stats['total_sessions']
                 },
                 'slides': slides
-            }), 200
+            }
+            
+            if audio_url:
+                response_data['audio_url'] = audio_url
+            
+            return jsonify(response_data), 200
             
         except Exception as inner_e:
             print(f"Error processing file: {str(inner_e)}")
