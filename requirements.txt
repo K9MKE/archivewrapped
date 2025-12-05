@@ -1,0 +1,8 @@
+pandas
+matplotlib
+seaborn
+plotly
+Pillow
+flask
+werkzeug
+gunicorn
