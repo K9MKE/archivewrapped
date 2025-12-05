@@ -691,7 +691,10 @@ class WrappedPresentation:
             # Try to get show artwork (using quick mode for production)
             recording_id = show.get('recording_id', None)
             artwork_x = 20
-            if recording_id:
+            
+            # TEMPORARILY DISABLED - causing timeouts on free tier
+            # Will re-enable once we have more stable infrastructure
+            if False and recording_id:  # Disabled
                 try:
                     print(f"  Fetching artwork for show #{i+1}...")
                     show_artwork = self._get_show_artwork(recording_id, quick_mode=True)
