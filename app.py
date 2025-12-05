@@ -68,6 +68,13 @@ def upload_file():
                         if file in required_files:
                             shutil.copy(os.path.join(root, file), data_dir)
             
+            # Verify we have at least the main file
+            if not os.path.exists(os.path.join(data_dir, 'ListeningHistorySummary.tsv')):
+                return jsonify({
+                    'success': False,
+                    'error': 'Could not find ListeningHistorySummary.tsv in the uploaded file. Please make sure you uploaded a valid Archive.org listening history export.'
+                }), 400
+            
             # Generate wrapped
             analyzer = ListeningHistoryAnalyzer(data_dir)
             analyzer.load_data()
@@ -93,14 +100,25 @@ def upload_file():
                     'total_sessions': stats['total_sessions']
                 },
                 'slides': slides
-            })
+            }), 200
+            
+        except Exception as inner_e:
+            print(f"Error processing file: {str(inner_e)}")
+            return jsonify({
+                'success': False,
+                'error': f'Error processing file: {str(inner_e)}'
+            }), 500
             
         finally:
             # Cleanup temp directory
             shutil.rmtree(temp_dir, ignore_errors=True)
     
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"Upload error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Upload error: {str(e)}'
+        }), 500
 
 @app.route('/slides/<filename>')
 def serve_slide(filename):
