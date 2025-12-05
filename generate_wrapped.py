@@ -102,7 +102,14 @@ class WrappedPresentation:
             return None
     
     def _create_blurred_background(self, ax, recording_id=None, opacity=0.15):
-        """Add a beautiful blurred show artwork as background"""
+        """Add a beautiful blurred show artwork as background
+        
+        DISABLED on production to save processing time and memory.
+        """
+        # Skip on production
+        if not os.environ.get('ENABLE_ARTWORK'):
+            return False
+            
         if recording_id:
             artwork = self._get_show_artwork(recording_id)
             if artwork is not None:
@@ -119,14 +126,13 @@ class WrappedPresentation:
     def _get_show_artwork(self, recording_id):
         """Fetch show artwork from Archive.org using official APIs
         
-        Uses Archive.org's official Metadata API and Archival URLs:
-        - Metadata API: https://archive.org/metadata/{identifier}
-        - Archival URL: https://archive.org/download/{identifier}/{filename}
-        
-        References:
-        - https://archive.org/developers/md-read.html
-        - https://archive.org/developers/items.html#archival-urls
+        DISABLED on production to reduce memory and processing time.
+        Enable locally by setting ENABLE_ARTWORK environment variable.
         """
+        # Skip artwork fetching on production servers to save memory and time
+        if not os.environ.get('ENABLE_ARTWORK'):
+            return None
+            
         try:
             import urllib.request
             import json
